@@ -4,33 +4,69 @@ import { comments } from "../data"
  * 
  * @returns {Promise<Response>} A promise that resolves to a Response object containing the message "New Comment".
  */
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-    const comment = comments.find(
-        (comment) => comment.id === parseInt(params.id)
-    );
-    return Response.json(comment);
+export async function GET(_req: Request, context: { params: { id: string } }) {
+    // Await `params` since it may be asynchronous
+    const params = await context.params;
+    const { id } = params;
+
+    const comment = comments.find((comment) => comment.id === parseInt(id, 10));
+
+    if (!comment) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
+
+    return new Response(JSON.stringify(comment), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    });
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, context: { params: { id: string } }) {
+    const params = await context.params; // Await params
+    const { id } = params;
+
     const body = await req.json();
+    const { text } = body;
 
-    const { text } = body
+    const index = comments.findIndex((comment) => comment.id === parseInt(id, 10));
 
-    const index = comments.findIndex(
-        comment => comment.id === parseInt(params.id)
-    )
+    if (index === -1) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
 
     comments[index].text = text;
 
-    return Response.json(comments[index]);
+    return new Response(JSON.stringify(comments[index]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    });
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-    const index = comments.findIndex(comment => comment.id === parseInt(params.id));
+
+export async function DELETE(req: Request, context: { params: { id: string } }) {
+    const params = await context.params; // Await params
+    const { id } = params;
+
+    const index = comments.findIndex((comment) => comment.id === parseInt(id, 10));
+
+    if (index === -1) {
+        return new Response(JSON.stringify({ error: 'Comment not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
 
     const deletedComment = comments[index];
     comments.splice(index, 1);
 
-    return Response.json(deletedComment);
-
+    return new Response(JSON.stringify(deletedComment), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+    });
 }
