@@ -4,10 +4,20 @@ import { comments } from "../data"
  * 
  * @returns {Promise<Response>} A promise that resolves to a Response object containing the message "New Comment".
  */
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+// import { NextResponse } from "next/server";
+
+export async function GET(
+    _req: Request,
+    { params }: { params: { id: string } }
+) {
     const comment = comments.find(
-        (comment) => comment.id === parseInt(params.id)
+        (comment) => comment.id === parseInt(params.id, 10) // Ensure parsing with base 10
     );
+
+    if (!comment) {
+        return Response.json({ error: "Comment not found" }, { status: 404 });
+    }
+
     return Response.json(comment);
 }
 
